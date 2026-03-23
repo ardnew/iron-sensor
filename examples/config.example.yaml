@@ -1,0 +1,42 @@
+# iron-sensor configuration
+# Copy to your desired path and pass via: iron-sensor --config /path/to/config.yaml
+
+sink_type: file       # stdout or file
+
+file_sink:
+  output_path: /var/log/iron/sensor/events.json
+  max_size: 100       # max log file size in MB before rotation
+  max_backups: 5      # number of rotated files to keep
+  compress: true      # gzip rotated files
+
+rules:
+  # Minimum severity to emit. 0 = alert, 1 = warn, 2 = info.
+  # Events with severity above this threshold are dropped.
+  # Agent lifecycle events (start/stop) are always emitted.
+  # Omit to emit everything.
+  # min_severity: 2
+
+  # Per-rule overrides keyed by rule name.
+  # Each rule can have severity and/or enabled overrides.
+  #
+  # Process rules:
+  #   privilege_escalation, ptrace_tool, network_tool,
+  #   interpreter_exec, shell_spawn, package_manager
+  #
+  # Persistence rules:
+  #   ssh_persistence, cron_write, systemd_unit_write,
+  #   system_profile_write, ld_preload_write, sudoers_write,
+  #   shell_rc_write, xdg_autostart, apt_hook, npmrc_write,
+  #   git_hook_write
+  #
+  # File rules:
+  #   ssh_key_access, proc_mem_access, docker_socket,
+  #   cgroup_write, sensitive_file_write, sensitive_file_read,
+  #   generic_write
+  overrides: {}
+    # shell_spawn:
+    #   severity: 2       # downgrade from warn to info
+    # package_manager:
+    #   enabled: false     # suppress entirely
+    # generic_write:
+    #   enabled: false     # suppress generic file write events

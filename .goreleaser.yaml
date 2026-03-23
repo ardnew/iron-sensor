@@ -1,0 +1,25 @@
+version: 2
+
+before:
+  hooks:
+    - go generate ./internal/agent/
+
+builds:
+  - main: ./cmd/iron-sensor/
+    binary: iron-sensor
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+
+archives:
+  - formats: [tar.gz]
+    files:
+      - LICENSE
+      - README.md
+      - examples/*
+
+changelog:
+  sort: asc

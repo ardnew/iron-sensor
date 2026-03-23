@@ -1,0 +1,12 @@
+[Unit]
+Description=Iron Sensor - AI agent behavioral monitor
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/iron-sensor --config /etc/iron-sensor/config.yaml
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
