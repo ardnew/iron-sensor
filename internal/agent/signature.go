@@ -1,8 +1,11 @@
 package agent
 
 import (
-	"iron-sensor/internal/config"
+	"fmt"
+	"regexp"
 	"strings"
+
+	"iron-sensor/internal/config"
 )
 
 // Signature defines how to identify an AI coding agent process.
@@ -25,12 +28,23 @@ func BuiltinSignatures() []Signature {
 }
 
 // BuildSignatures returns builtin signatures plus any configured binary detections.
-func BuildSignatures(dets []config.BinaryDetection) []Signature {
+func BuildSignatures(dets []config.BinaryDetection) ([]Signature, error) {
 	sigs := make([]Signature, len(builtinSignatures))
 	copy(sigs, builtinSignatures)
 	for _, d := range dets {
 		bin := d.Binary
 		name := d.Name
+		argsPattern := d.ArgsRegex
+
+		var argsRe *regexp.Regexp
+		if argsPattern != "" {
+			var err error
+			argsRe, err = regexp.Compile(argsPattern)
+			if err != nil {
+				return nil, fmt.Errorf("detection %q: invalid args_regex: %w", name, err)
+			}
+		}
+
 		sigs = append(sigs, Signature{
 			Name: name,
 			MatchExe: func(_ string) bool {
@@ -40,11 +54,22 @@ func BuildSignatures(dets []config.BinaryDetection) []Signature {
 				if len(argv) == 0 {
 					return false
 				}
-				return baseName(argv[0]) == bin
+				if baseName(argv[0]) != bin {
+					return false
+				}
+				if argsRe == nil {
+					return true
+				}
+				for _, a := range argv[1:] {
+					if argsRe.MatchString(a) {
+						return true
+					}
+				}
+				return false
 			},
 		})
 	}
-	return sigs
+	return sigs, nil
 }
 
 var builtinSignatures = []Signature{

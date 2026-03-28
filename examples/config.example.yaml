@@ -16,6 +16,7 @@ detections:
   binaries: []
     # - name: my_agent        # signature name in events
     #   binary: my-agent-bin  # basename of argv[0] to match
+    #   args_regex: ""        # optional regex matched against argv[1:]
 
 rules:
   # Minimum severity to emit. 0 = alert, 1 = warn, 2 = info.
