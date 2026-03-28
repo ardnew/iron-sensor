@@ -127,21 +127,23 @@ Detection works both at startup (scanning `/proc`) and live (via the exec tracep
 
 #### Custom binary detections
 
-You can configure additional binary detections via the `detections` section in your config file. Each entry matches on the basename of `argv[0]`, the same way the built-in Claude Code and OpenClaw detections work.
+You can configure additional binary detections via the `detections` section in your config file. Each entry matches on the basename of `argv[0]`, the same way the built-in Claude Code and OpenClaw detections work. Optionally, use `args_regex` to also require a regex match against the process arguments.
 
 ```yaml
 detections:
   binaries:
     - name: exfil_agent
       binary: exfil-tool
-    - name: custom_assistant
-      binary: my-ai-agent
+    - name: exfil_script
+      binary: bash
+      args_regex: "exfil\\.sh"
 ```
 
 | Field | Description |
 |---|---|
 | `name` | Signature name that appears in emitted events (`signature_matched`) |
 | `binary` | Basename of `argv[0]` to match (e.g. `my-agent` matches `/usr/local/bin/my-agent`) |
+| `args_regex` | Optional regex matched against `argv[1:]`. If set, at least one argument must match |
 
 Custom detections are appended to the built-in set — built-in agents are always detected regardless of config.
 

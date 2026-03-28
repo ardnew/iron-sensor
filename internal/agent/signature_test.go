@@ -72,7 +72,8 @@ func TestBuildSignatures_CustomBinary(t *testing.T) {
 	dets := []config.BinaryDetection{
 		{Name: "exfil_agent", Binary: "exfil-tool"},
 	}
-	sigs := BuildSignatures(dets)
+	sigs, err := BuildSignatures(dets)
+	require.NoError(t, err)
 
 	// Should still match builtins.
 	sig, ok := MatchWith(sigs, "/usr/local/bin/claude", []string{"claude"})
@@ -91,7 +92,8 @@ func TestBuildSignatures_CustomBinary(t *testing.T) {
 }
 
 func TestBuildSignatures_NoCustom(t *testing.T) {
-	sigs := BuildSignatures(nil)
+	sigs, err := BuildSignatures(nil)
+	require.NoError(t, err)
 	require.Equal(t, len(BuiltinSignatures()), len(sigs))
 }
 
@@ -99,8 +101,50 @@ func TestBuildSignatures_CustomNoMatchOther(t *testing.T) {
 	dets := []config.BinaryDetection{
 		{Name: "my_agent", Binary: "my-agent"},
 	}
-	sigs := BuildSignatures(dets)
+	sigs, err := BuildSignatures(dets)
+	require.NoError(t, err)
 
 	_, ok := MatchWith(sigs, "/usr/bin/bash", []string{"bash"})
 	require.False(t, ok)
+}
+
+func TestBuildSignatures_ArgsRegex(t *testing.T) {
+	dets := []config.BinaryDetection{
+		{Name: "exfil_script", Binary: "bash", ArgsRegex: `exfil\.sh`},
+	}
+	sigs, err := BuildSignatures(dets)
+	require.NoError(t, err)
+
+	// Should match bash running the exfil script.
+	sig, ok := MatchWith(sigs, "/usr/bin/bash", []string{"bash", "/tmp/exfil.sh"})
+	require.True(t, ok)
+	require.Equal(t, "exfil_script", sig)
+
+	// Should not match bash running something else.
+	_, ok = MatchWith(sigs, "/usr/bin/bash", []string{"bash", "other.sh"})
+	require.False(t, ok)
+
+	// Should not match bash with no args.
+	_, ok = MatchWith(sigs, "/usr/bin/bash", []string{"bash"})
+	require.False(t, ok)
+}
+
+func TestBuildSignatures_ArgsRegex_NoMatch_WrongBinary(t *testing.T) {
+	dets := []config.BinaryDetection{
+		{Name: "exfil_script", Binary: "bash", ArgsRegex: `exfil\.sh`},
+	}
+	sigs, err := BuildSignatures(dets)
+	require.NoError(t, err)
+
+	_, ok := MatchWith(sigs, "/usr/bin/zsh", []string{"zsh", "exfil.sh"})
+	require.False(t, ok)
+}
+
+func TestBuildSignatures_InvalidRegex(t *testing.T) {
+	dets := []config.BinaryDetection{
+		{Name: "bad", Binary: "bash", ArgsRegex: `[invalid`},
+	}
+	_, err := BuildSignatures(dets)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "invalid args_regex")
 }

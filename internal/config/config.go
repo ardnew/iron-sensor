@@ -19,8 +19,9 @@ type DetectionsConfig struct {
 }
 
 type BinaryDetection struct {
-	Name    string `yaml:"name"`
-	Binary  string `yaml:"binary"`
+	Name      string `yaml:"name"`
+	Binary    string `yaml:"binary"`
+	ArgsRegex string `yaml:"args_regex"`
 }
 
 type FileSinkConfig struct {
